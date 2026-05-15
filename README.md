@@ -1,7 +1,7 @@
 **ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ PROJESİ**
  - Platformumuz, gelişmiş makine öğrenmesi algoritmaları ile online pazaryerlerini saniyeler içinde daha güvenli hale getirir.
 
-  - Demo Web Sayfası: https://frauddetectorv1.vercel.app/
+  - Demo Web Sayfası: (FRAUD DEDECTOR) [https://frauddetectorv1.vercel.app/]
        
 **1\. AMAÇ**
 
