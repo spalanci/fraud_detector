@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fake Shop – Demo Test Platformu</title>
+  <meta name="description" content="Şüpheli İşlem ve Sahte Satıcı Tespiti Demo Platformu" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/fraud_detector.css" />
+  <link rel="stylesheet" href="css/chatbot.css" />
+  <style>
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+      animation: modalSlide 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalSlide {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    #alert-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: 8px;
+      z-index: 5000;
+      display: none;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+      }
+
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    .badge-passive {
+      background: rgba(0, 0, 0, 0.4);
+      color: #888;
+      border: 1px solid #444;
+    }
+
+    .product-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+    }
+
+    .product-badge.status-success {
+      background: #059669;
+      color: white;
+    }
+
+    .product-badge.status-warning {
+      background: #d97706;
+      color: white;
+    }
+
+    .product-badge.status-error {
+      background: #dc2626;
+      color: white;
+    }
+
+    #chatbot-container {
+      --assistant-color: var(--color-primary);
+    }
+
+    #chatbot-container .action-chip:hover {
+      background: color-mix(in srgb, var(--assistant-color) 22%, transparent);
+      border-color: var(--assistant-color);
+    }
+
+    #chatbot-input:focus {
+      border-color: var(--assistant-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--assistant-color) 22%, transparent);
+    }
+
+    #seller-msg-input::placeholder {
+      color: #cbd5e1;
+      opacity: 1;
+      font-weight: 600;
+    }
+
+    #seller-msg-input:focus {
+      outline: none;
+      border-color: #93c5fd !important;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.28), inset 0 0 0 1px rgba(255,255,255,0.06) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="alert-toast"></div>
+
+  <header style="position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1000; justify-content: center;">
+    <div class="logo" style="font-weight: 700; font-size: 1.2rem;">🛡️ FraudDetector</div>
+    <nav>
+      <a href="index.html">Anasayfa</a>
+      <a href="about.html">Hakkında</a>
+      <a href="rapor.html">Proje Raporu</a>
+      <a href="demo.html" class="active">Demo</a>
+      <div style="z-index: 2000; position: relative; display: inline-block;">
+        <button class="nav-cart-btn" onclick="toggleCart()"
+          style="background: none; border: none; color: white; cursor: pointer; padding: 10px 15px; font-size: 0.9rem; transition: 0.3s; display: block; align-items: center; gap: 8px;">
+          🛒 Sepetim (<span id="cart-count">0</span>)
+        </button>
+        <div id="cart-dropdown" 
+          style="display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 380px; z-index: 99999; padding: 20px; background: #1e293b; border: 2px solid rgba(59, 130, 246, 0.5); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); max-height: 550px; overflow-y: auto; text-align: left;">
+          <button onclick="toggleCart()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+          <h4 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; color: #fff; font-size: 1.1rem;">🛒 Sepetim</h4>
+          <div id="cart-items-list">
+            <p style="text-align: center; font-size: 0.8rem; color: #94a3b8;">Sepetiniz boş.</p>
+          </div>
+          <div id="cart-total"
+            style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; font-weight: 700;">
+            <span>Toplam:</span>
+            <span id="cart-total-price">0 ₺</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
+
+    <!-- 1. Rol Seçim Ekranı -->
+    <section id="role-selection">
+      <h2 style="text-align:center; margin-bottom: 30px;">Lütfen bir rol seçerek başlayın</h2>
+      <div class="role-selector">
+        <div class="role-card" id="role-cust" onclick="switchRole('customer')">
+          <div style="font-size: 3rem;">🛒</div>
+          <h3>Müşteri</h3>
+          <p>Ürün alır, mesajlaşır, uyarı alır.</p>
+        </div>
+        <div class="role-card" id="role-sell" onclick="switchRole('seller')">
+          <div style="font-size: 3rem;">🏪</div>
+          <h3>Satıcı</h3>
+          <p>Ürün satar, bot yorum/IBAN dener.</p>
+        </div>
+        <div class="role-card" id="role-adm" onclick="switchRole('admin')">
+          <div style="font-size: 3rem;">📊</div>
+          <h3>Yönetici</h3>
+          <p>Alarmları izler, aksiyon alır.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr style="opacity:0.1; margin: 40px 0;">
+
+    <!-- 2. MÜŞTERİ GÖRÜNÜMÜ -->
+    <section id="view-customer" class="view-section">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>🛒 Müşteri Paneli</h2>
+      </div>
+
+      <div class="gallery" id="customer-products">
+        <!-- Products populated via JS -->
+      </div>
+
+      <div class="scenario-panel">
+        <p style="font-size: 0.8rem; color: #94a3b8;">Ürünlerin yanındaki <strong>"Mesaj Yaz"</strong> butonuna
+          tıklayarak satıcı ile iletişime geçebilir ve güvenlik senaryolarını test edebilirsiniz.</p>
+      </div>
+
+      <!-- Messaging Modal for Customer -->
+      <div id="chat-modal" class="modal-overlay" style="display:none;">
+        <div class="glass modal-content"
+          style="max-width: 500px; width: 90%; padding: 25px; position: relative; background: rgba(15, 23, 42, 0.95);">
+          <button onclick="closeChatModal()"
+            style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+
+          <h3 id="modal-chat-header" style="margin-bottom: 20px;">💬 Satıcı ile Mesajlaşma</h3>
+
+          <div style="margin-bottom: 15px;">
+            <p style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px;">Hızlı Sorular:</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="action-chip" onclick="askSeller('Merhaba, ürün hala stokta mı?')">👋 Merhaba</button>
+              <button class="action-chip" onclick="askSeller('Ürünün ebatları nedir?')">📏 Ebatlar</button>
+              <button class="action-chip" onclick="showChatHelp()"
+                style="background: rgba(59, 130, 246, 0.2); color: white; border-color: var(--color-primary);">💡 Yardım
+                / SSS</button>
+            </div>
+          </div>
+
+          <div id="customer-chat-window" class="chat-window" style="height: 280px;">
+            <div class="msg msg-bot">Satıcıya ürün hakkında soru sorabilirsiniz.</div>
+          </div>
+
+          <div id="customer-violation-banner" class="violation-banner" style="display:none;"></div>
+
+          <div style="display:flex; gap:10px; margin: 15px 0;">
+            <input type="text" id="customer-msg-input" class="glass"
+              style="flex:1; padding:12px; border:1px solid rgba(255,255,255,0.2); color: white; background: rgba(0,0,0,0.3);"
+              placeholder="Mesajınızı yazın..." onkeypress="if(event.key==='Enter') customerSendMessage()">
+            <button class="btn btn-primary" onclick="customerSendMessage()">Gönder</button>
+          </div>
+
+          <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+            <p style="font-size: 0.7rem; color: #fc8181; margin-bottom: 8px; font-weight: 600;">⚠️ TEST SENARYOLARI
+              (Sadece Demo İçin):</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="test-btn" style="background: rgba(245,101,101,0.1); border-color: rgba(245,101,101,0.2);"
+                onclick="runScenario('M1')">🧪 IBAN Talebi Simüle Et</button>
+              <button class="test-btn" style="background: rgba(245,101,101,0.1); border-color: rgba(245,101,101,0.2);"
+                onclick="runScenario('M4_1')">🧪 Küfürlü Mesaj (1. Uyarı)</button>
+              <button class="test-btn" style="background: rgba(245,101,101,0.1); border-color: rgba(245,101,101,0.2);"
+                onclick="runScenario('M4_3')">🧪 Küfürlü Mesaj (Pasif Et)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SATICI GÖRÜNÜMÜ -->
+    <section id="view-seller" class="view-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 id="seller-panel-title">🏪 Satıcı Paneli</h2>
+        <div id="seller-selector" style="display: flex; gap: 10px;">
+          <!-- Seller buttons will be injected here -->
+        </div>
+      </div>
+      <div class="glass" style="margin-bottom: 20px; display: flex; gap: 20px; padding: 20px;">
+        <div class="stat-item">
+          <p>Risk Skoru</p>
+          <h3 id="seller-risk-val">12%</h3>
+        </div>
+        <div class="stat-item">
+          <p>Durum</p>
+          <h3 id="seller-status-val" style="color:#68d391;">Aktif</h3>
+        </div>
+        <div class="stat-item">
+          <p>İade Oranı</p>
+          <h3 id="seller-return-val">%5</h3>
+        </div>
+      </div>
+
+      <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Messaging -->
+        <div class="glass">
+          <h3>💬 Müşteri Mesajları</h3>
+          <iframe src="fraud_dedector/public/index.html" title="Fraud Detector chatbot background"
+            aria-hidden="true" tabindex="-1"
+            style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; border:0;"></iframe>
+          <div id="seller-chat-window" class="chat-window" style="height: 300px; margin-bottom: 15px;">
+            <div class="msg msg-bot">Müşteri (Soner): Selam, bu ürünün garantisi var mı?</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="seller-msg-input" class="glass"
+              style="flex:1; padding:12px; border:1px solid rgba(96,165,250,0.65); color:#ffffff; background:rgba(15,23,42,0.92); font-weight:600; caret-color:#60a5fa; box-shadow:0 0 0 1px rgba(96,165,250,0.18), inset 0 0 0 1px rgba(255,255,255,0.04);" placeholder="Müşteriye yanıt ver..."
+              onkeypress="if(event.key==='Enter') sellerSendMessage()">
+            <button class="btn btn-primary" onclick="sellerSendMessage()">Yanıtla</button>
+          </div>
+        </div>
+
+        <!-- Seller Scenarios -->
+        <div class="glass">
+          <h3>🧪 Satıcı Aksiyon Testleri</h3>
+          <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 20px;">Bir satıcı olarak yasaklı eylemleri simüle
+            edin.</p>
+
+          <div class="scenario-grid" style="display: grid; gap: 10px;">
+            <button class="test-btn" onclick="runScenario('S2')">❌ IBAN Göndermeyi Dene (Engelleme)</button>
+            <button class="test-btn" onclick="runScenario('S4')">❌ Müşteriye Küfür Et (İhlal)</button>
+            <button class="test-btn" onclick="runScenario('S1')">📈 Sahte Yorum Al (Risk Artışı)</button>
+            <button class="test-btn" onclick="runScenario('S3')">🔄 İade Oranı Artışı (%70)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. YÖNETİCİ GÖRÜNÜMÜ -->
+    <section id="view-admin" class="view-section">
+      <h2>📊 E-Ticaret Yönetici Paneli</h2>
+      <div class="admin-tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('alerts')">🚨 Kritik Alarmlar</button>
+        <button class="tab-btn" onclick="switchAdminTab('sellers')">🏪 Satıcı Denetimi</button>
+        <button class="tab-btn" onclick="switchAdminTab('profanity')">⚠️ Küfürlü Kullanıcılar</button>
+      </div>
+
+      <div id="admin-content" class="glass" style="min-height: 300px; padding: 20px;">
+        <!-- Admin content populated via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modern Chatbot Container -->
+  <div id="chatbot-container">
+    <div id="chatbot-header" onclick="toggleChatbot()">
+      <span id="chatbot-title">🛡️ Güvenlik Asistanı</span>
+      <span id="chat-toggle-icon">▼</span>
+    </div>
+
+    <div id="chatbot-messages">
+      <div class="msg msg-bot">Merhaba! Alışveriş güvenliği konusunda size nasıl yardımcı olabilirim? 🛡️</div>
+    </div>
+
+    <div id="typing-indicator" class="typing">AI analiz yapıyor...</div>
+
+    <div id="chatbot-quick-actions" class="chat-quick-actions"></div>
+
+    <div id="chatbot-input-area">
+      <input type="text" id="chatbot-input" placeholder="Mesajınızı yazın..."
+        onkeypress="if(event.key==='Enter') sendBotMessage()">
+      <button id="chatbot-send" onclick="sendBotMessage()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Fraud Detector Demo Platformu. Tüm hakları saklıdır.
+  </footer>
+
+  <script>
+    // --- STATE MANAGEMENT ---
+    const PRODUCT_IMAGES = [
+      'images/ayakkabi.png',
+      'images/koltuk.png',
+      'images/robot.png',
+      'images/robot2.png',
+      'images/tencere.png'
+    ];
+
+    const PRODUCT_NAMES = [
+      "Premium Spor Ayakkabı",
+      "Modern Konfor Koltuk",
+      "Akıllı Ev Robotu v1",
+      "Endüstriyel Robot Kol",
+      "Granit Tencere Seti"
+    ];
+
+    let state = {
+      currentRole: null,
+      currentAdminTab: 'alerts',
+      cartItems: [], // Changed from customerCart: 0
+      customerStatus: 'active',
+      customerProfanityViolations: 0,
+      activeSellerId: 2, // Default to HızlıGönder
+
+      sellers: [
+        { id: 1, name: "TeknoWorld", status: 'active', risk: 8, fakeReviews: 0, returnRate: 5, complaints: 2, stripeRisk: 10, paymentAnomalies: 0, offPlatformAttempts: 0, profanityViolations: 0 },
+        { id: 2, name: "HızlıGönder", status: 'active', risk: 68, fakeReviews: 85, returnRate: 35, complaints: 12, stripeRisk: 55, paymentAnomalies: 2, offPlatformAttempts: 1, profanityViolations: 0 },
+        { id: 3, name: "EliteStore", status: 'active', risk: 5, fakeReviews: 0, returnRate: 2, complaints: 0, stripeRisk: 5, paymentAnomalies: 0, offPlatformAttempts: 0, profanityViolations: 0 }
+      ],
+
+      alerts: []
+    };
+
+    const PROFANITY_LIST = ["aptal", "mal", "küfür", "gerizekalı", "şerefsiz"];
+    const IBAN_REGEX = /TR\d{2}[0-9\sA-Z]{22,26}/gi;
+
+    function maskIBAN(text) {
+      return text.replace(IBAN_REGEX, (match) => {
+        return match.substring(0, 4) + " **** **** **** **** **** " + match.substring(match.length - 2);
+      });
+    }
+
+    // --- INITIALIZATION ---
+    function switchRole(role) {
+      state.currentRole = role;
+
+      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
+      if (role === 'customer') document.getElementById('role-cust').classList.add('active');
+      if (role === 'seller') document.getElementById('role-sell').classList.add('active');
+      if (role === 'admin') document.getElementById('role-adm').classList.add('active');
+
+      document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+      document.getElementById(`view-${role}`).classList.add('active');
+
+      updateSecurityAssistantForRole(role);
+      renderCurrentView();
+      showToast(`${role.toUpperCase()} moduna geçildi.`, "info");
+    }
+
+    function renderCurrentView() {
+      if (state.currentRole === 'customer') renderCustomerView();
+      if (state.currentRole === 'seller') renderSellerView();
+      if (state.currentRole === 'admin') renderAdminView();
+    }
+
+    // --- CUSTOMER LOGIC ---
+    function renderCustomerView() {
+      const gallery = document.getElementById('customer-products');
+      gallery.innerHTML = '';
+
+      // Define specific products for demonstration
+      const demoProducts = [
+        { name: "Düğün Ayakkabısı", price: "2.450 ₺", img: "images/ayakkabi.png", sellerIdx: 0 },
+        { name: "Smart Robot Süpürge X2", price: "12.800 ₺", img: "images/robot2.png", sellerIdx: 1 },
+        { name: "Granit Tencere Seti (7 Parça)", price: "3.200 ₺", img: "images/tencere.png", sellerIdx: 2 },
+        { name: "Modern Ofis Koltuğu", price: "4.150 ₺", img: "images/koltuk.png", sellerIdx: 0 },
+        { name: "Endüstriyel Robot v4", price: "45.000 ₺", img: "images/robot.png", sellerIdx: 1 }
+      ];
+
+      demoProducts.forEach((p) => {
+        const seller = state.sellers[p.sellerIdx];
+        const score = calculateRiskScore(seller);
+        const riskLabel = score < 30 ? "Güvenli Satıcı" : score < 60 ? "Orta Risk" : "Yüksek Risk";
+        const riskClass = score < 30 ? "status-success" : score < 60 ? "status-warning" : "status-error";
+
+        gallery.innerHTML += `
+          <div class="card glass product-card" style="transition: transform 0.3s ease;">
+            <div class="product-badge ${riskClass}" style="position: absolute; top: 10px; right: 10px; font-size: 0.6rem; padding: 4px 8px; border-radius: 20px; font-weight: 700; z-index: 1;">
+              ${riskLabel}
+            </div>
+            <div style="height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; background: rgba(255,255,255,0.02); margin-bottom: 15px;">
+              <img src="${p.img}" style="max-width: 90%; max-height: 90%; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));">
+            </div>
+            <h4 style="font-size: 0.95rem; margin-bottom: 5px; height: 2.4em; overflow: hidden;">${p.name}</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <span style="font-size: 1.1rem; font-weight: 700; color: var(--color-primary);">${p.price}</span>
+              <span style="font-size: 0.7rem; color: #94a3b8;">${seller.name}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-primary" style="flex: 2; padding: 8px; font-size: 0.8rem;" onclick="customerAddToCart(${seller.id})">
+                ${seller.status === 'passive' ? '❌ Pasif' : 'Sepete Ekle'}
+              </button>
+              <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 0.8rem;" onclick="openSellerChat('${seller.name}')" title="Satıcıya Soru Sor">
+                💬 Satıcıya Sor
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    let currentActiveSeller = "";
+
+    function openSellerChat(sellerName) {
+      currentActiveSeller = sellerName;
+      sellerChatbotHistory = [];
+      const seller = state.sellers.find(s => s.name === sellerName);
+      const score = calculateRiskScore(seller);
+      const riskColor = getRiskColor(score);
+      const riskLabel = score < 30 ? "Güvenli Satıcı" : score < 60 ? "Şüpheli" : "Yüksek Risk";
+
+      const modal = document.getElementById('chat-modal');
+      const chatHeader = document.getElementById('modal-chat-header');
+      chatHeader.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span>💬 ${sellerName}</span>
+          <span style="font-size:0.7rem; background:${riskColor}22; color:${riskColor}; padding:2px 8px; border-radius:10px; border:1px solid ${riskColor}44;">${riskLabel}</span>
+        </div>
+      `;
+
+      const chatWindow = document.getElementById('customer-chat-window');
+      chatWindow.innerHTML = `<div class="msg msg-bot">${sellerName} satıcısına hoş geldiniz. Size nasıl yardımcı olabilirim?</div>`;
+
+      if (score > 40) {
+        addChatMessage('customer-chat-window', "GUVENLIK UYARISI: Bu satici sistem tarafindan riskli olarak isaretlenmistir. Lutfen kisisel bilgilerinizi paylasmayin.", 'system');
+      }
+
+      modal.style.display = 'flex';
+      showToast(`${sellerName} ile sohbet baslatildi.`, "info");
+      showChatHelp();
+    }
+
+    function askSeller(question) {
+      addChatMessage('customer-chat-window', question, 'user');
+
+      const seller = state.sellers.find(s => s.name === currentActiveSeller);
+      const score = seller ? calculateRiskScore(seller) : 0;
+
+      setTimeout(() => {
+        let reply = "Lutfen hazir sorulardan (Yardim/SSS) devam ediniz veya stok, kargo, iade gibi temel konularda soru sorunuz.";
+        const q = question.toLowerCase();
+
+        if (q.includes("stok")) reply = "Evet, urun su an stoklarimizda mevcut. Hemen siparis verebilirsiniz.";
+        else if (q.includes("ebat")) reply = "Urun standart olculerdedir (45x45 cm). Detaylar aciklama kisminda yer aliyor.";
+        else if (q.includes("kargo")) reply = "Aras Kargo ve Yurtici Kargo ile calisiyoruz. Genelde 24 saat icinde kargoya verilir.";
+        else if (q.includes("indirim")) reply = "Maalesef su an icin ekstra bir indirim tanimli degil, ancak platform kampanyalarini takip edebilirsiniz.";
+        else if (q.includes("garanti")) reply = "Urunumuz 2 yil resmi distributor garantilidir. Faturasi paketle birlikte gonderilir.";
+        else if (q.includes("iade")) reply = "14 gun icerisinde kutusu acilmamis ve hasar gormemis urunleri ucretsiz iade edebilirsiniz.";
+        else if (q.includes("sÄ±fÄ±r") || q.includes("sifir")) reply = "Tum urunlerimiz kapali kutu ve sifirdir. Teshir urun satisi yapmiyoruz.";
+        else if (q.includes("renk")) reply = "Su an stoklarimizda gorseldeki renk mevcuttur. Farkli renkler icin magazamiza goz atabilirsiniz.";
+        else if (q.includes("odeme") || q.includes("Ã¶deme")) reply = "Odemelerinizi sadece platformun guvenli odeme sistemini kullanarak tamamlayabilirsiniz.";
+        else if (q.includes("nereden")) reply = "Depomuz Istanbul/Lojistik merkezindedir. Turkiye'nin her yerine gonderim sagliyoruz.";
+
+        addChatMessage('customer-chat-window', reply, 'bot');
+
+        if (score > 40) {
+          setTimeout(() => {
+            addChatMessage('customer-chat-window', "GUVENLIK HATIRLATMASI: Bu satici yuksek risk puanina sahiptir. Odemenizi sadece platform uzerinden tamamlayin.", 'system');
+          }, 400);
+        }
+      }, 1000);
+    }
+
+    function showChatHelp() {
+      const helpMsg = `
+        <div style="font-weight: 600; margin-bottom: 8px;">💡 Sık Sorulan Sorular:</div>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <a href="#" onclick="askSeller('Ürün stokta mı?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">1. Ürün stokta mı?</a>
+          <a href="#" onclick="askSeller('Ürün orijinal mi/sıfır mı?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">2. Ürün orijinal mi/sıfır mı?</a>
+          <a href="#" onclick="askSeller('Kargo süresi nedir?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">3. Kargo süresi nedir?</a>
+          <a href="#" onclick="askSeller('Garanti durumu nedir?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">4. Garanti durumu nedir?</a>
+          <a href="#" onclick="askSeller('İade politikanız nedir?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">5. İade politikanız nedir?</a>
+          <a href="#" onclick="askSeller('İndirim yapabilir misiniz?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">6. İndirim yapabilir misiniz?</a>
+          <a href="#" onclick="askSeller('Ürünün ebatları nedir?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">7. Ürünün ebatları nedir?</a>
+          <a href="#" onclick="askSeller('Hangi renkleri mevcut?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">8. Hangi renkleri mevcut?</a>
+          <a href="#" onclick="askSeller('Ödeme seçenekleri nelerdir?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">9. Ödeme seçenekleri nelerdir?</a>
+          <a href="#" onclick="askSeller('Ürün nereden gönderilecek?'); return false;" style="color: var(--color-primary); font-size: 0.8rem; text-decoration: none;">10. Ürün nereden gönderilecek?</a>
+        </div>
+      `;
+      const window = document.getElementById('customer-chat-window');
+      const div = document.createElement('div');
+      div.className = 'msg msg-bot';
+      div.innerHTML = helpMsg;
+      window.appendChild(div);
+      window.scrollTop = window.scrollHeight;
+    }
+
+    function closeChatModal() {
+      document.getElementById('chat-modal').style.display = 'none';
+    }
+
+    function customerAddToCart(sellerId) {
+      const seller = state.sellers.find(s => s.id === sellerId);
+      const score = calculateRiskScore(seller);
+      if (seller.status === 'passive') { showToast("Bu satıcı pasif edilmiştir.", "error"); return; }
+
+      // Find the product data from our demoProducts array
+      const product = [
+        { id: 1, name: "Düğün Ayakkabısı", price: 2450, img: "images/ayakkabi.png", sellerId: 1 },
+        { id: 2, name: "Smart Robot Süpürge X2", price: 12800, img: "images/robot2.png", sellerId: 2 },
+        { id: 3, name: "Granit Tencere Seti (7 Parça)", price: 3200, img: "images/tencere.png", sellerId: 3 },
+        { id: 4, name: "Modern Ofis Koltuğu", price: 4150, img: "images/koltuk.png", sellerId: 1 },
+        { id: 5, name: "Endüstriyel Robot v4", price: 45000, img: "images/robot.png", sellerId: 2 }
+      ].find(p => p.sellerId === sellerId);
+
+      if (score > 40) { showToast("⚠️ DİKKAT: Şüpheli satıcı sinyali!", "warning"); }
+
+      state.cartItems.push({
+        ...product,
+        sellerName: seller.name,
+        riskScore: score
+      });
+
+      renderCart();
+      showToast("Ürün sepete eklendi.", "success");
+    }
+
+    function toggleCart() {
+      const cart = document.getElementById('cart-dropdown');
+      cart.style.display = cart.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function removeFromCart(index) {
+      state.cartItems.splice(index, 1);
+      renderCart();
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cart-items-list');
+      const count = document.getElementById('cart-count');
+      const totalDisplay = document.getElementById('cart-total-price');
+
+      count.textContent = state.cartItems.length;
+      list.innerHTML = '';
+
+      if (state.cartItems.length === 0) {
+        list.innerHTML = '<p style="text-align: center; font-size: 0.8rem; color: #94a3b8;">Sepetiniz boş.</p>';
+        totalDisplay.textContent = '0 ₺';
+        return;
+      }
+
+      let total = 0;
+      state.cartItems.forEach((item, index) => {
+        total += item.price;
+        const riskColor = getRiskColor(item.riskScore);
+        const riskLabel = item.riskScore < 30 ? "Güvenli" : item.riskScore < 60 ? "Şüpheli" : "Riskli";
+
+        list.innerHTML += `
+          <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; font-size: 0.8rem;">
+            <img src="${item.img}" style="width: 40px; height: 40px; object-fit: contain; background: rgba(255,255,255,0.05); border-radius: 4px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600;">${item.name}</div>
+              <div style="display: flex; gap: 5px; align-items: center; font-size: 0.7rem;">
+                <span style="color: #94a3b8;">${item.sellerName}</span>
+                <span style="background: ${riskColor}22; color: ${riskColor}; padding: 1px 5px; border-radius: 3px; font-weight: 700; border: 1px solid ${riskColor}44;">${riskLabel}</span>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 700;">${item.price.toLocaleString()} ₺</div>
+              <button onclick="removeFromCart(${index})" style="background: none; border: none; color: #fc8181; font-size: 0.7rem; cursor: pointer; padding: 0;">Kaldır</button>
+            </div>
+          </div>
+        `;
+      });
+
+      totalDisplay.textContent = total.toLocaleString() + ' ₺';
+    }
+
+    async function customerSendMessage() {
+      const input = document.getElementById('customer-msg-input');
+      const text = input.value.trim();
+      if (!text || state.customerStatus === 'passive') return;
+      addChatMessage('customer-chat-window', text, 'user');
+      input.value = '';
+
+      if (PROFANITY_LIST.some(word => text.toLowerCase().includes(word))) {
+        state.customerProfanityViolations++;
+        handleCustomerViolation();
+        return;
+      }
+
+      const seller = state.sellers.find(s => s.name === currentActiveSeller);
+      const score = seller ? calculateRiskScore(seller) : 0;
+      const thinking = document.createElement('div');
+      thinking.className = 'msg msg-bot';
+      thinking.textContent = 'Yanit hazirlaniyor...';
+      const chatWindow = document.getElementById('customer-chat-window');
+      chatWindow.appendChild(thinking);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      try {
+        const contextText = [
+          `Sen ${currentActiveSeller || 'demo satici'} adli e-ticaret saticisisin.`,
+          'Musterinin urun, stok, kargo, iade, garanti, odeme ve guvenlik sorularina kisa ve yardimci cevap ver.',
+          'Platform disi odeme, IBAN, kart numarasi veya sahte yonlendirme yapma.',
+          `Musteri mesaji: ${text}`
+        ].join(' ');
+
+        sellerChatbotHistory.push({
+          role: 'user',
+          parts: [{ text: contextText }]
+        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: sellerChatbotHistory }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Satıcı yanıtı alınamadı.');
+        }
+
+        const reply = data.text.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        sellerChatbotHistory.push({
+          role: 'model',
+          parts: [{ text: reply }]
+        });
+
+        thinking.textContent = maskIBAN(reply);
+
+        if (score > 40) {
+          setTimeout(() => {
+            addChatMessage('customer-chat-window', "GUVENLIK HATIRLATMASI: Bu satici yuksek risk puanina sahiptir. Odemenizi sadece platform uzerinden tamamlayin.", 'system');
+          }, 400);
+        }
+      } catch (error) {
+        thinking.className = 'msg msg-system';
+        thinking.textContent = error.name === 'AbortError'
+          ? 'Satici yaniti zaman asimina ugradi. Lutfen birkac saniye sonra tekrar deneyin.'
+          : `Satici yaniti alinamadi: ${error.message}`;
+      }
+    }
+
+    function handleCustomerViolation() {
+      const banner = document.getElementById('customer-violation-banner');
+      banner.style.display = 'none'; // No longer needed as we use chat bubbles
+
+      if (state.customerProfanityViolations === 1) {
+        addChatMessage('customer-chat-window', "⚠️ Uygunsuz ifade tespiti (1/3). Lütfen kurallara uyun.", 'system');
+      } else if (state.customerProfanityViolations === 2) {
+        addChatMessage('customer-chat-window', "⚠️ SON UYARI (2/3). Tekrarında hesap kapatılacaktır.", 'system');
+      } else {
+        state.customerStatus = 'passive';
+        addChatMessage('customer-chat-window', "❌ Hesabınız ihlal nedeniyle pasif edilmiştir.", 'system');
+        const input = document.getElementById('customer-msg-input');
+        input.value = "Hesabınız pasif edildiği için mesaj yazamazsınız";
+        input.placeholder = "Hesabınız pasif edildiği için mesaj yazamazsınız";
+        input.disabled = true;
+        addAdminAlert("Müşteri", "Sistem", "Sürekli Küfürlü İfade", "CRITICAL");
+      }
+    }
+
+    // --- SELLER LOGIC ---
+    function renderSellerView() {
+      const selector = document.getElementById('seller-selector');
+      selector.innerHTML = '';
+      state.sellers.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = `test-btn ${state.activeSellerId === s.id ? 'active' : ''}`;
+        btn.style.width = 'auto';
+        btn.style.padding = '5px 15px';
+        btn.textContent = s.name;
+        btn.onclick = () => { state.activeSellerId = s.id; sellerRoleChatbotHistory = []; renderSellerView(); };
+        selector.appendChild(btn);
+      });
+
+      const seller = state.sellers.find(s => s.id === state.activeSellerId);
+      document.getElementById('seller-panel-title').textContent = `🏪 Satıcı Paneli (${seller.name})`;
+      const score = calculateRiskScore(seller);
+      document.getElementById('seller-risk-val').textContent = `${score}%`;
+      document.getElementById('seller-risk-val').style.color = getRiskColor(score);
+      document.getElementById('seller-status-val').textContent = seller.status === 'active' ? 'Aktif' : 'Pasif';
+      document.getElementById('seller-status-val').style.color = seller.status === 'active' ? '#68d391' : '#fc8181';
+      document.getElementById('seller-return-val').textContent = `%${seller.returnRate}`;
+
+      const input = document.getElementById('seller-msg-input');
+      const passiveMessage = "Hesabını pasif olduğu için mesaj yazamazsınız";
+      if (seller.status === 'passive') {
+        input.value = passiveMessage;
+        input.placeholder = passiveMessage;
+        input.disabled = true;
+      } else {
+        if (input.value === passiveMessage) input.value = '';
+        input.placeholder = "Müşteriye yanıt ver...";
+        input.disabled = false;
+      }
+    }
+
+    async function sellerSendMessage() {
+      const input = document.getElementById('seller-msg-input');
+      const text = input.value.trim();
+      const seller = state.sellers.find(s => s.id === state.activeSellerId);
+
+      if (!text || seller.status === 'passive') return;
+
+      // 1. IBAN Detection (Reset regex lastIndex or use match)
+      if (text.match(IBAN_REGEX)) {
+        addChatMessage('seller-chat-window', text, 'user');
+        setTimeout(() => {
+          addChatMessage('seller-chat-window', "❌ MESAJ ENGELLENDİ: Güvenliğiniz için IBAN paylaşımı yasaktır. Ödemeleri sadece platform üzerinden talep edebilirsiniz.", 'system');
+          showToast("⚠️ Engellendi: IBAN Paylaşımı!", "error");
+          seller.offPlatformAttempts++;
+          addAdminAlert("Satıcı", seller.name, "Müşteriye IBAN gönderdi (BLOKLANDI)", "CRITICAL");
+          renderSellerView();
+        }, 400);
+        input.value = '';
+        return;
+      }
+
+      // 2. Profanity Detection
+      if (PROFANITY_LIST.some(word => text.toLowerCase().includes(word))) {
+        addChatMessage('seller-chat-window', text, 'user');
+        seller.profanityViolations++;
+        setTimeout(() => {
+          addChatMessage('seller-chat-window', `⚠️ UYARI: Uygunsuz ifade tespiti (${seller.profanityViolations}/3).`, 'system');
+          if (seller.profanityViolations >= 3) {
+            seller.status = 'passive';
+            addChatMessage('seller-chat-window', "❌ Hesabınız kural ihlali nedeniyle pasif edilmiştir.", 'system');
+            addAdminAlert("Satıcı", seller.name, "Sürekli küfürlü mesaj", "CRITICAL");
+          }
+          renderSellerView();
+        }, 400);
+        input.value = '';
+        return;
+      }
+
+      // 3. Normal Send
+      addChatMessage('seller-chat-window', text, 'user');
+      input.value = '';
+      showToast("Mesaj müşteriye iletildi.", "success");
+      await generateSellerCustomerReply(text, seller);
+    }
+
+    async function generateSellerCustomerReply(text, seller) {
+      const chatWindow = document.getElementById('seller-chat-window');
+      const thinking = document.createElement('div');
+      thinking.className = 'msg msg-bot';
+      thinking.textContent = 'Müşteri yanıt yazıyor...';
+      chatWindow.appendChild(thinking);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      try {
+        const contextText = [
+          'Sen e-ticaret platformunda müşteri Soner rolündesin.',
+          `Karşındaki satıcı ${seller.name}.`,
+          'Satıcı mesajına kısa, doğal ve müşteri gibi yanıt ver.',
+          'Şüpheli ödeme, IBAN, platform dışı yönlendirme veya güvenlik riski sezersen bunu belirt.',
+          `Satıcı mesajı: ${text}`
+        ].join(' ');
+
+        sellerRoleChatbotHistory.push({
+          role: 'user',
+          parts: [{ text: contextText }]
+        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: sellerRoleChatbotHistory }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Müşteri yanıtı alınamadı.');
+        }
+
+        const reply = data.text.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        sellerRoleChatbotHistory.push({
+          role: 'model',
+          parts: [{ text: reply }]
+        });
+
+        thinking.textContent = maskIBAN(reply);
+      } catch (error) {
+        thinking.className = 'msg msg-system';
+        thinking.textContent = error.name === 'AbortError'
+          ? 'Müşteri yanıtı zaman aşımına uğradı. Lütfen birkaç saniye sonra tekrar deneyin.'
+          : `Müşteri yanıtı alınamadı: ${error.message}`;
+      }
+    }
+
+    // --- ADMIN LOGIC ---
+    function switchAdminTab(tab) {
+      state.currentAdminTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (event) event.target.classList.add('active');
+      renderAdminView();
+    }
+
+    function renderAdminView() {
+      const content = document.getElementById('admin-content');
+      content.innerHTML = '';
+      if (state.currentAdminTab === 'alerts') {
+        if (state.alerts.length === 0) content.innerHTML = "<p>Şu an kritik bir alarm bulunmuyor.</p>";
+        if (state.alerts.length > 0) content.innerHTML += `<div style="margin-bottom: 20px; text-align: right;"><button class="btn btn-secondary" style="font-size: 0.8rem; padding: 8px 15px;" onclick="adminMassWarning()">📢 Tüm Mağdur Müşterileri Uyar (Y3)</button></div>`;
+        state.alerts.forEach(a => {
+          content.innerHTML += `<div class="violation-banner" style="background:rgba(245,101,101,0.1); border:1px solid #fc8181; color:#fc8181;"><div style="flex:1;"><strong>[${a.level}]</strong> ${a.source} -> ${a.target}: ${a.reason}<div style="font-size:0.7rem; opacity:0.6;">${a.time}</div></div><button class="test-btn" style="width:auto;" onclick="adminToggleSeller(1)">Aksiyon Al</button></div>`;
+        });
+      }
+      if (state.currentAdminTab === 'sellers') {
+        content.innerHTML = `<table style="width:100%; border-collapse: collapse;"><thead><tr style="text-align:left; border-bottom:1px solid #333;"><th>Satıcı</th><th>Risk</th><th>Durum</th><th>Aksiyon</th></tr></thead><tbody>${state.sellers.map(s => `<tr style="border-bottom:1px solid #222;"><td>${s.name}</td><td style="color:${getRiskColor(calculateRiskScore(s))}">${calculateRiskScore(s)}%</td><td>${s.status}</td><td><button class="test-btn" onclick="adminToggleSeller(${s.id})">${s.status === 'active' ? 'Pasif Et' : 'Aktif Et'}</button></td></tr>`).join('')}</tbody></table>`;
+      }
+      if (state.currentAdminTab === 'profanity') {
+        content.innerHTML = `<p>3 İhlal Alan Kullanıcılar:</p>${state.customerStatus === 'passive' ? `<div class="glass" style="padding:10px; display:flex; justify-content:space-between; align-items:center;"><span>👤 Müşteri (Soner) - Durum: PASİF</span><button class="test-btn" onclick="state.customerStatus='active'; state.customerProfanityViolations=0; renderAdminView();">Aktif Et</button></div>` : "<p>İhlali olan kullanıcı yok.</p>"}`;
+      }
+    }
+
+    function adminToggleSeller(id) {
+      const seller = state.sellers.find(s => s.id === id);
+      seller.status = seller.status === 'active' ? 'passive' : 'active';
+      if (state.currentRole === 'seller' && state.activeSellerId === id) renderSellerView();
+      showToast(`${seller.name} durumu güncellendi.`, "success");
+      renderAdminView();
+    }
+
+    function adminMassWarning() {
+      showToast("📢 Tüm mağdur müşterilere Gemini uyarısı gönderildi.", "success");
+      setTimeout(() => alert("Gemini Mesajı: 'Değerli müşterimiz, TeknoWorld satıcısının şüpheli IBAN talebi tespit edilmiştir...'"), 500);
+    }
+
+    // --- FORMULA ---
+    function calculateRiskScore(s) {
+      const score = (0.25 * s.fakeReviews) + (0.20 * s.returnRate) + (0.15 * s.complaints * 10) + (0.10 * s.stripeRisk) + (0.10 * s.paymentAnomalies * 20) + (0.20 * Math.min(s.offPlatformAttempts * 20, 100));
+      return Math.min(Math.round(score), 100);
+    }
+
+    // --- SCENARIOS ---
+    function runScenario(code) {
+      const tekno = state.sellers[0];
+      const hizli = state.sellers[1];
+      const activeSeller = state.sellers.find(s => s.id === state.activeSellerId);
+
+      switch (code) {
+        case 'M1':
+          addChatMessage('customer-chat-window', "Selam, indirim yaparsan hemen alırım.", 'user');
+          setTimeout(() => {
+            addChatMessage('customer-chat-window', `Tabii, şu IBAN'a 1000 TL atarsan hemen kargolarım: TR12 3456 7890 1234 5678 9012 34`, 'bot');
+
+            // System message inside chat
+            setTimeout(() => {
+              addChatMessage('customer-chat-window', "⚠️ UYARI: Satıcı platform dışı ödeme (IBAN) talep etti. Güvenliğiniz için ödemeyi sadece sistem üzerinden yapın!", 'system');
+              showToast("⚠️ IBAN TESPİT EDİLDİ!", "error");
+            }, 500);
+
+            tekno.offPlatformAttempts++;
+            addAdminAlert("Satıcı", tekno.name, "Müşteriden IBAN talep etti", "CRITICAL");
+          }, 1000);
+          break;
+        case 'M4_1': document.getElementById('customer-msg-input').value = "Bu ürün tam bir çöp, mal mısın?"; customerSendMessage(); break;
+        case 'M4_3': state.customerProfanityViolations = 2; document.getElementById('customer-msg-input').value = "Seni aptal herif!"; customerSendMessage(); break;
+        case 'S1':
+          activeSeller.fakeReviews += 20;
+          showToast("Sahte yorumlar eklendi.", "warning");
+          addAdminAlert("AI Sistemi", activeSeller.name, "Bot yorum artışı tespit edildi", "MEDIUM");
+          break;
+        case 'S2':
+          document.getElementById('seller-msg-input').value = "Ödemeyi şu IBAN'a yapın: TR12 9999 8888 7777 6666 5555 44";
+          sellerSendMessage();
+          break;
+        case 'S3':
+          activeSeller.returnRate = 70;
+          showToast("İade oranı %70 seviyesine çıktı!", "warning");
+          addAdminAlert("Sistem", activeSeller.name, "Anormal İade Oranı Artışı", "HIGH");
+          break;
+        case 'S4':
+          document.getElementById('seller-msg-input').value = "Sen ne biçim müşterisin, aptal!";
+          sellerSendMessage();
+          break;
+      }
+      renderCurrentView();
+    }
+
+    // --- CHATBOT UI ---
+    const securityAssistantHistories = {
+      customer: [],
+      seller: [],
+      admin: []
+    };
+    let sellerChatbotHistory = [];
+    let sellerRoleChatbotHistory = [];
+    const assistantConfigs = {
+      customer: {
+        title: "🛡️ Müşteri Güvenlik Asistanı",
+        color: "#3b82f6",
+        colorDark: "#1d4ed8",
+        placeholder: "Alışveriş güvenliği sorunuzu yazın...",
+        welcome: "Merhaba! Satıcı güvenilirliği, IBAN talepleri ve güvenli ödeme konularında size yardımcı olabilirim.",
+        systemPrompt: "Sen müşteri güvenliği asistanısın. Kullanıcı alışveriş yapan müşteri rolünde. Satıcı riski, IBAN talebi, güvenli ödeme, sahte yorum ve iade güvenliği konularında kısa, net ve koruyucu cevap ver. Platform dışı ödeme yapmamasını özellikle vurgula.",
+        quickActions: [
+          { id: "customer-seller-check", label: "🏪 Satıcı Kontrolü", question: "HızlıGönder güvenilir mi?", reply: "HızlıGönder yüksek risk sinyalleri taşıyor: sahte yorum yoğunluğu, iade oranı ve platform dışı ödeme denemeleri yüksek. Ödemeyi sadece platform üzerinden yapın.", reason: "Customer risk view: seller score + off-platform payment signals." },
+          { id: "customer-iban", label: "⚠️ IBAN Talebi", question: "Satıcı IBAN isterse ne yapmalıyım?", reply: "IBAN talebi kritik uyarıdır. Ödeme yapmayın, konuşmayı platform içinde tutun ve satıcıyı bildirin.", reason: "Pattern: off-platform payment request + fraud prevention policy." },
+          { id: "customer-fake-review", label: "🤖 Sahte Yorum", question: "Sahte yorumları nasıl anlarım?", reply: "Çok kısa sürede gelen benzer yorumlar, aşırı övgülü tekrarlar ve düşük geçmişli hesaplar sahte yorum sinyalidir.", reason: "Review anomaly signals: duplicate wording + timing burst." },
+          { id: "customer-return", label: "↩️ İade Güvenliği", question: "İade sürecinde nelere dikkat etmeliyim?", reply: "İade kodunu platformdan alın, kargo fişini saklayın ve satıcının platform dışı çözüm tekliflerini kabul etmeyin.", reason: "Safe refund workflow guidance." }
+        ]
+      },
+      seller: {
+        title: "🏪 Satıcı Güvenlik Asistanı",
+        color: "#10b981",
+        colorDark: "#047857",
+        placeholder: "Satıcı güvenliği sorunuzu yazın...",
+        welcome: "Merhaba! Mesajlaşma kuralları, IBAN engeli, uygunsuz ifade ve mağaza risk skorunuz hakkında yardımcı olabilirim.",
+        systemPrompt: "Sen satıcı güvenliği ve uyum asistanısın. Kullanıcı satıcı rolünde. Müşteriye mesaj yazarken yasaklı IBAN paylaşımı, platform dışı ödeme, küfürlü ifade, iade oranı ve sahte yorum risklerini anlat. Cevapların satıcıyı kurallara uyacak şekilde yönlendirsin.",
+        quickActions: [
+          { id: "seller-message-rules", label: "💬 Mesaj Kuralları", question: "Müşteriye nasıl güvenli yanıt vermeliyim?", reply: "Kısa, net ve platform içinde kalın. IBAN, telefon, kart bilgisi veya dış bağlantı paylaşmayın.", reason: "Seller compliance: safe messaging policy." },
+          { id: "seller-risk-score", label: "📊 Risk Skoru", question: "Satıcı risk skorum neden artar?", reply: "Sahte yorum, yüksek iade oranı, şikayetler, ödeme anomalileri ve platform dışı ödeme denemeleri risk skorunu artırır.", reason: "Seller formula: reviews + returns + complaints + payment anomalies." },
+          { id: "seller-profanity", label: "⚠️ İfade Uyarısı", question: "Uygunsuz mesaj yazarsam ne olur?", reply: "Uygunsuz ifade ihlal olarak sayılır. Tekrarlayan ihlallerde hesabınız pasif edilebilir.", reason: "Profanity enforcement: repeated violation threshold." },
+          { id: "seller-iban", label: "🚫 IBAN Engeli", question: "Müşteriye IBAN gönderebilir miyim?", reply: "Hayır. IBAN paylaşımı engellenir ve yöneticiye kritik alarm olarak düşer. Ödemeyi platform üzerinden talep edin.", reason: "IBAN regex block + admin alert." }
+        ]
+      },
+      admin: {
+        title: "📊 Yönetici Güvenlik Asistanı",
+        color: "#f59e0b",
+        colorDark: "#b45309",
+        placeholder: "Denetim veya aksiyon sorunuzu yazın...",
+        welcome: "Merhaba! Satıcı denetimi, kritik alarmlar, pasifleştirme kararları ve mağdur müşteri uyarıları için buradayım.",
+        systemPrompt: "Sen e-ticaret yöneticisi için fraud operasyon asistanısın. Kullanıcı yönetici rolünde. Risk skorları, kritik alarmlar, satıcı pasifleştirme, müşteri uyarısı ve karar önceliklendirme konularında operasyonel, kısa ve aksiyon odaklı cevap ver.",
+        quickActions: [
+          { id: "admin-critical-alerts", label: "🚨 Kritik Alarmlar", question: "Önce hangi alarmı incelemeliyim?", reply: "Öncelik sırası: IBAN/platform dışı ödeme, yüksek risk skorlu satıcı, ani iade oranı artışı ve bot yorum patlaması olmalı.", reason: "Admin triage: severity + user harm priority." },
+          { id: "admin-disable-seller", label: "⛔ Pasif Etme", question: "Satıcıyı ne zaman pasif etmeliyim?", reply: "IBAN denemesi, tekrarlı küfür, çok yüksek risk skoru veya mağduriyet ihtimali varsa satıcıyı pasif edip incelemeye alın.", reason: "Action policy: critical fraud signals trigger suspension." },
+          { id: "admin-mass-warning", label: "📢 Müşteri Uyarısı", question: "Mağdur müşterilere nasıl uyarı göndermeliyim?", reply: "Kısa ve net uyarı gönderin: platform dışı ödeme yapmayın, şüpheli satıcıyla işlemi durdurun, destek kaydı açın.", reason: "Customer protection workflow." },
+          { id: "admin-risk-formula", label: "📈 Risk Formülü", question: "Risk skorunu nasıl yorumlamalıyım?", reply: "65 üzeri satıcılar manuel inceleme veya pasifleştirme adayıdır. 85 üzeri sinyallerde hızlı aksiyon önerilir.", reason: "Risk threshold interpretation." }
+        ]
+      }
+    };
+
+    function getAssistantConfig() {
+      return assistantConfigs[state.currentRole] || assistantConfigs.customer;
+    }
+
+    function updateSecurityAssistantForRole(role) {
+      const config = assistantConfigs[role] || assistantConfigs.customer;
+      document.getElementById('chatbot-container').style.setProperty('--assistant-color', config.color);
+      document.getElementById('chatbot-title').textContent = config.title;
+      document.getElementById('chatbot-header').style.background = `linear-gradient(to right, ${config.color}, ${config.colorDark})`;
+      document.getElementById('chatbot-send').style.background = config.color;
+      document.getElementById('chatbot-input').placeholder = config.placeholder;
+
+      const messages = document.getElementById('chatbot-messages');
+      messages.innerHTML = `<div class="msg msg-bot">${config.welcome}</div>`;
+
+      const actions = document.getElementById('chatbot-quick-actions');
+      actions.innerHTML = config.quickActions.map(action =>
+        `<div class="action-chip" onclick="quickAsk('${action.id}')">${action.label}</div>`
+      ).join('');
+    }
+
+    function toggleChatbot() {
+      const container = document.getElementById('chatbot-container');
+      container.classList.toggle('closed');
+      document.getElementById('chat-toggle-icon').textContent = container.classList.contains('closed') ? '▲' : '▼';
+    }
+
+    function quickAsk(scenario) {
+      const config = getAssistantConfig();
+      const selected = config.quickActions.find(action => action.id === scenario);
+      if (!selected) return;
+      addChatMessage('chatbot-messages', selected.question, 'user');
+      sendScenarioBotMessage(selected);
+    }
+
+    function sendScenarioBotMessage(selected) {
+      const indicator = document.getElementById('typing-indicator');
+      const config = getAssistantConfig();
+      indicator.style.display = 'block';
+
+      setTimeout(() => {
+        indicator.style.display = 'none';
+        const messages = document.getElementById('chatbot-messages');
+        const botDiv = document.createElement('div');
+        botDiv.className = 'msg msg-bot';
+        botDiv.innerHTML = `
+          <div style="margin-bottom: 8px;">${selected.reply}</div>
+          <div style="font-family: 'Courier New', monospace; font-size: 0.65rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 6px; color: #68d391;">
+            <div style="color: ${config.color}; margin-bottom: 2px;">AGENT_LOG: ${config.title}</div>
+            <div style="opacity: 0.8;">> ${selected.reason}</div>
+            <div style="margin-top: 4px; opacity: 0.5;">Status: OK | Token: 1.2M | Latency: 42ms</div>
+          </div>
+        `;
+        messages.appendChild(botDiv);
+        messages.scrollTop = messages.scrollHeight;
+      }, 1200);
+    }
+
+    async function sendBotMessage() {
+      const input = document.getElementById('chatbot-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addChatMessage('chatbot-messages', text, 'user');
+      input.value = '';
+
+      const indicator = document.getElementById('typing-indicator');
+      indicator.style.display = 'block';
+
+      try {
+        const config = getAssistantConfig();
+        const role = state.currentRole || 'customer';
+        const history = securityAssistantHistories[role] || securityAssistantHistories.customer;
+        const contextualText = `${config.systemPrompt}\n\nKullanıcı sorusu: ${text}`;
+
+        history.push({
+          role: 'user',
+          parts: [{ text: contextualText }]
+        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: history }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Asistan yanıtı alınamadı.');
+        }
+
+        const reply = data.text.replace(/\*\*(.*?)\*\*/g, '$1').trim();
+        history.push({
+          role: 'model',
+          parts: [{ text: reply }]
+        });
+
+        indicator.style.display = 'none';
+        const messages = document.getElementById('chatbot-messages');
+        const botDiv = document.createElement('div');
+        botDiv.className = 'msg msg-bot';
+        botDiv.textContent = maskIBAN(reply);
+        messages.appendChild(botDiv);
+        messages.scrollTop = messages.scrollHeight;
+      } catch (error) {
+        indicator.style.display = 'none';
+        const message = error.name === 'AbortError'
+          ? 'Asistan yanıtı zaman aşımına uğradı. Lütfen birkaç saniye sonra tekrar deneyin.'
+          : `Asistan bağlantısı kurulamadı: ${error.message}`;
+        addChatMessage('chatbot-messages', message, 'system');
+      }
+    }
+
+    // --- HELPERS ---
+    function addChatMessage(id, text, side) {
+      const window = document.getElementById(id);
+      const div = document.createElement('div');
+      div.className = `msg msg-${side}`;
+
+      // Apply IBAN masking for non-system messages
+      const processedText = side !== 'system' ? maskIBAN(text) : text;
+
+      div.textContent = processedText;
+      window.appendChild(div);
+      window.scrollTop = window.scrollHeight;
+    }
+
+    function addAdminAlert(source, target, reason, level) {
+      state.alerts.unshift({ source, target, reason, level, time: new Date().toLocaleTimeString() });
+    }
+
+    function getRiskColor(score) {
+      if (score < 30) return '#68d391';
+      if (score < 65) return '#f6ad55';
+      return '#fc8181';
+    }
+
+    function showToast(text, type) {
+      const toast = document.getElementById('alert-toast');
+      toast.textContent = text;
+      toast.style.display = 'block';
+      toast.style.background = type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : type === 'warning' ? '#ed8936' : '#4299e1';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    switchRole('customer');
+  </script>
+</body>
+
+</html>
