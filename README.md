@@ -1,6 +1,6 @@
 **ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ PROJESİ**
  - Platformumuz, gelişmiş makine öğrenmesi algoritmaları ile online pazaryerlerini saniyeler içinde daha güvenli hale getirir.
- - 4.3.1 maddesinde modelin eğitim sürecinin detaylarına bakabilirsiniz.
+ - 4.3.1 maddesinde modelin eğitim sürecinin detaylarına bakabilirsiniz. `data/sample_training_data.json` örnek bir veri seti vardır. Yapı arkasında çalışan veri hattını (data pipeline) inceleyebilirsiniz.
 
   - Demo Web Sayfası: (FRAUD DEDECTOR) [https://frauddetectorv1.vercel.app/]
   
