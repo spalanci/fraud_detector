@@ -4,7 +4,7 @@
 
   - Demo Web Sayfası: (FRAUD DEDECTOR) [https://frauddetectorv1.vercel.app/]
   
-[![FRAUD DEDECTOR - ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ](https://github.com/spalanci/fraud_detector/blob/main/images/background.png)](https://www.youtube.com/watch?v=Hc79sDi3f0U)
+[![FRAUD DEDECTOR - ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ](https://github.com/spalanci/fraud_detector/blob/main/images/background.png)](https://www.youtube.com/watch?v=hfBPqU5bz9c)
 
 Videolu anlatım için görsele tıklayınız.
        
