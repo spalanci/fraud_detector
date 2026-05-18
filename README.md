@@ -1,7 +1,12 @@
 **ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ PROJESİ**
  - Platformumuz, gelişmiş makine öğrenmesi algoritmaları ile online pazaryerlerini saniyeler içinde daha güvenli hale getirir.
+ - 4.3.1 maddesinde modelin eğitim sürecinin detaylarına bakabilirsiniz.
 
   - Demo Web Sayfası: (FRAUD DEDECTOR) [https://frauddetectorv1.vercel.app/]
+  
+[![FRAUD DEDECTOR - ŞÜPHELİ İŞLEM VE SAHTE SATICI TESPİTİ](https://github.com/spalanci/fraud_detector/blob/main/images/background.png)](https://www.youtube.com/watch?v=Hc79sDi3f0U)
+
+Videolu anlatım için görsele tıklayınız.
        
 **1\. AMAÇ**
 
@@ -82,6 +87,68 @@ Projenin başarıyla tamamlanabilmesi için asgari düzeyde sağlanması gereken
 - Hugging Face’den alınan **distilbert-base-uncased** modelinin ince ayarı (fine-tune) için en az 2 saat süre.
 - Gemini API kullanımı için **rate limit** aşılmamalı; 10’ar yorumluk batch’ler halinde gönderim.
 - Stripe Radar’ın **risk_score** alanına erişim izni (sandbox’ta varsayılan olarak gelir).
+
+**4.3.1 Model Eğitim Kılavuzu (Model Training Guide)**
+
+Fraud Detector projesinin arkasında çalışan yapay zeka modelinin (Gemini API entegrasyonu, makine öğrenmesi veya ince ayar/fine-tuning süreçleri için) hangi adımlarla eğitileceği ve bu süreçte ihtiyaç duyulan veri setlerinin yapısı maddeler halinde açıklanmıştır.
+
+**1. Model Eğitiminde İzlenecek Yöntemin Adımları**
+
+Yapay zeka modelinin %92 doğruluk payı ve <2sn analiz süresi hedeflerine ulaşabilmesi için aşağıdaki aşamalı eğitim mimarisi izlenir:
+
+* **Adım 1: Veri Toplama ve Çeşitlendirme (Data Sourcing):** Gerçek dünya senaryolarını yansıtan e-ticaret kullanıcı mesajları, satıcı profilleri, şüpheli IBAN/hesap hareketleri ve manipülatif diyaloglar güvenli kaynaklardan (anonimleştirilmiş olarak) toplanır.
+* **Adım 2: Veri Ön İşleme ve Etiketleme (Data Preprocessing & Labeling):**
+    * Metinlerdeki gürültüler (HTML etiketleri, alakasız emojiler, özel karakterler) temizlenir.
+    * Veriler; `Güvenli İşlem`, `Sahte Satıcı/Bot Yorumu`, `Platform Dışına Yönlendirme`, `Hakaret/Tehdit` ve `Finansal Risk (Şüpheli IBAN)` şeklinde etiketlenir (Annotation).
+* **Adım 3: Feature Engineering (Özellik Çıkarımı):** Metin tabanlı veriler yapay zekanın anlayacağı vektör formatına (Embedding) dönüştürülür. Kullanıcıların yazışma sıklığı, yanıt süreleri ve şüpheli kelime yoğunlukları gibi metrikler birer "öznitelik" olarak modele beslenir.
+* **Adım 4: Model Mimarisi Seçimi ve Temel Eğitim (Training):** * Doğal Dil İşleme (NLP) yetenekleri için hibrit bir mimari kullanılır: Derin öğrenme tabanlı sınıflandırıcılar (Transformer mimarileri) kural tabanlı regex filtreleriyle desteklenir.
+    * Büyük dil modellerinin (LLM/Gemini API) sistemle uyumlu çalışması için uygun istem şablonları (Prompt Engineering) ve Few-Shot Learning (örneklerle öğrenme) optimizasyonları yapılır.
+* **Adım 5: Rol Simülasyonu ve Adversarial (Yıpratma) Testleri:** Sistem, "Rol Simülasyonu" modülü üzerinden yapay zeka tarafından üretilen agresif sahte alıcı ve dolandırıcı bot senaryolarına maruz bırakılarak test edilir ve açıkları kapatılır.
+* **Adım 6: Değerlendirme ve Optimizasyon (Evaluation):** Modelin başarısı *F1-Score*, *Precision* (Kesinlik) ve *Recall* (Duyarlılık) metrikleri üzerinden ölçülür. %92 doğruluk kriterini sağlamayan alt modeller yeniden optimize edilir.
+
+---
+
+**2. Eğitim İçin Lazım Olabilecek Veri Setleri (Data Requirements)**
+
+Modelin e-ticaret yönetiminin elini güçlendirecek seviyede keskin kararlar verebilmesi için aşağıdaki veri tiplerine ihtiyaç vardır:
+
+#### A. NLP ve Metin Analizi Veri Setleri (Yazışma ve Yorumlar)
+* **Müşteri - Satıcı Sohbet Geçmişleri:** E-ticaret platformlarındaki canlı destek veya sipariş içi mesajlaşma logları (Kişisel verilerden arındırılmış / KVKK uyumlu).
+* **Yönlendirme ve Manipülasyon Örnekleri:** Satıcıların komisyon ödememek için müşteriyi platform dışına çekmeye çalıştığı mesaj kalıpları (Örn: *"Bize WhatsApp'tan yazın", "Parayı sahibinden.com dışından EFT yapın"*).
+* **Sahte Yorum ve Bot Verileri:** Ürün puanlarını manipüle etmek amacıyla botlar veya organize gruplar tarafından atılan, birbirini tekrar eden veya aşırı yapay övgü/yergi içeren yorum veri setleri.
+* **Hakaret ve Toksik Dil Kütüphanesi:** Alıcı veya satıcıların birbirlerine yönelik kullandığı argo, hakaret, tehdit veya psikolojik manipülasyon (gaslighting) içeren Türkçe metin verileri.
+
+#### B. Davranışsal ve Analitik Veri Setleri (Alışkanlık Takibi)
+* **Kullanıcı Davranış Metrikleri:** Bir hesaba ait giriş IP lokasyonları, cihaz değişiklik sıklığı, alışılmadık saatlerde yapılan toplu işlemler ve normal kullanıcı hızının üzerindeki (bot şüphesi doğuran) tıklama/mesajlaşma hızları.
+* **Hesap Yaşı ve Güven Skoru Korelasyonu:** Yeni açılan ve açılır açılmaz çok yüksek tutarlı ilanlar yükleyen şüpheli satıcı profillerine ait geçmiş veriler.
+
+#### C. Finansal Risk Veri Setleri (Otomatik Blok İçin)
+* **Şüpheli IBAN ve Hesap Hesapları Kara Listesi:** Daha önce dolandırıcılık vakalarına karışmış, uyuşmazlık rapor edilmiş anonimleştirilmiş IBAN formatları ve hesap yapıları.
+* **Fiyat Manipülasyonu Verileri:** Piyasa değerinin aşırı altında veya üstünde girilerek sahte nitelik taşıyan ilanların fiyat değişim trendi verileri.
+
+---
+
+**🛠️ Eğitim Verisi Yapı Örneği (JSON Format)**
+
+Modelin girdi-çıktı senaryolarını anlamlandırması için kullanılacak örnek bir eğitim veri formatı:
+
+```json
+[
+  {
+    "context": "Müşteri ve Satıcı Sipariş Sohbeti",
+    "message_history": [
+      {"sender": "buyer", "message": "Ürünün faturası mevcut mu?"},
+      {"sender": "seller", "message": "Evet mevcut ama buradan komisyon çok kesiliyor. we-transfer-guvenli-odeme.com üzerinden öderseniz %10 indirim yaparım."}
+    ],
+    "labels": {
+      "is_fraud": true,
+      "risk_type": "Platform Dışı Yönlendirme / Sahte Link",
+      "confidence_score": 0.98,
+      "action_required": "Otomatik Blok & Yöneticiye Bildir"
+    }
+  }
+]
+```
 
 **4.4 Kullanıcı Arayüzleri**
 
