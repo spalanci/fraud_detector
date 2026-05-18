@@ -1,0 +1,217 @@
+[
+  {
+    "id": "CASE_001",
+    "context": "Satıcı - Platform Dışına Yönlendirme ve Sahte Link",
+    "target_type": "seller",
+    "target_id": "seller_9912",
+    "message_history": [
+      {"sender": "buyer", "message": "Ürünü beğendim ama taksit seçenekleri burada çok kısıtlı."},
+      {"sender": "seller", "message": "Buradaki komisyon oranları yüksek olduğu için taksit yapamıyoruz. isik-guvenli-odeme-sistemi.com/ilan/3821 linkinden girerseniz vade farksız 6 taksit yapabilirim, orası da bizim alt yapımız."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 3,
+      "total_reported_complaints": 0,
+      "message_velocity_per_min": 8
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Platform Dışı Yönlendirme / Oltalama (Phishing)",
+      "confidence_score": 0.99,
+      "suggested_action": "AUTOMATIC_BLOCK_AND_ADMIN_ALERT"
+    }
+  },
+  {
+    "id": "CASE_002",
+    "context": "Satıcı - IBAN ile Ödeme İsteme / Havale Dolandırıcılığı",
+    "target_type": "seller",
+    "target_id": "seller_4412",
+    "message_history": [
+      {"sender": "buyer", "message": "Kargoya bugün verir misiniz acil ihtiyacım var?"},
+      {"sender": "seller", "message": "Sistem onayını beklersek yarına kalır. Siz bana TR56 0006 2000 ... nolu IBAN'a (Ahmet T.) parayı gönderip dekont atın, ben hemen motor kuryeyle çıkarttırayım ürünü."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 12,
+      "total_reported_complaints": 1,
+      "message_velocity_per_min": 2
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Dışarıdan Ödeme Talebi (IBAN/Havale)",
+      "confidence_score": 0.97,
+      "suggested_action": "AUTOMATIC_BLOCK_AND_TRANSLATION_HOLD"
+    }
+  },
+  {
+    "id": "CASE_003",
+    "context": "Satıcı - Kişisel Bilgi / KVKK İhlali ve Sosyal Mühendislik",
+    "target_type": "seller",
+    "target_id": "seller_0981",
+    "message_history": [
+      {"sender": "buyer", "message": "Ayakkabının 42 numarası ne zaman stokta olur?"},
+      {"sender": "seller", "message": "Stoklar yarın güncellenecek. Siz bana tckn, tam isim ve açık adresinizi buradan yazın, ben sizin adınıza ürünü şimdiden ayırayım, sistemden uğraşmayın."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 45,
+      "total_reported_complaints": 0,
+      "message_velocity_per_min": 1
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Gereksiz Kişisel Veri Talebi / Veri Avcılığı",
+      "confidence_score": 0.91,
+      "suggested_action": "WARN_USER_AND_FLAG_SELLER"
+    }
+  },
+  {
+    "id": "CASE_004",
+    "context": "Müşteri - Seri İade Suistimali (Farklı Satıcılardan Toplu İade)",
+    "target_type": "buyer",
+    "target_id": "buyer_7731",
+    "message_history": [
+      {"sender": "buyer", "message": "Ürünü beğenmedim, kumaşı çok kötü iade talebi oluşturuyorum."},
+      {"sender": "seller", "message": "Efendim ürün orijinal lisanslı üründür, iade hakkınız tabii ki var ama kutusunu açtıysanız tekrar satılamaz hale geliyor."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 30,
+      "last_10_orders_return_count": 9,
+      "distinct_sellers_interacted": 8,
+      "total_refunded_amount_tl": 45000
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Kötü Niyetli İade İstismarı (Wardrobing / Dönemsel Kullanım)",
+      "confidence_score": 0.95,
+      "suggested_action": "RESTRICT_RETURN_PRIVILEGE_AND_REVIEW"
+    }
+  },
+  {
+    "id": "CASE_005",
+    "context": "Satıcı - Farklı/Sahte Ürün Gönderimi Tehdidi ve İtirafı",
+    "target_type": "seller",
+    "target_id": "seller_5123",
+    "message_history": [
+      {"sender": "buyer", "message": "Yorumlarda herkese replika veya bambaşka bir model gönderdiğiniz yazıyor, doğru mu?"},
+      {"sender": "seller", "message": "Kardeşim o fiyata orijinalini rüyanda görürsün ancak. İşine geliyorsa. Beğenmezsen iade edersin uğraştırma bizi."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 8,
+      "product_price_vs_market_avg": -0.65,
+      "total_reported_complaints": 4
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Kasıtlı Farklı/Sahte Ürün Gönderimi (Misleading)",
+      "confidence_score": 0.94,
+      "suggested_action": "SUSPEND_LISTING_AND_AUDIT"
+    }
+  },
+  {
+    "id": "CASE_006",
+    "context": "Müşteri - Toksik Dil, Küfür ve Hakaret",
+    "target_type": "buyer",
+    "target_id": "buyer_1102",
+    "message_history": [
+      {"sender": "buyer", "message": "Kargo hala gelmedi lanet olası herifler, dolandırıcı mısınız nesiniz ulan siz?"},
+      {"sender": "seller", "message": "Beyefendi kargo firması kaynaklı bir gecikme var, takip numarasını iletiyorum, lütfen üslubunuza dikkat edin."},
+      {"sender": "buyer", "message": "Başlatma kargona da üslubuna da şerefsizler, adam gibi iş yapın lan parayı yemeyi biliyorsunuz o... çocukları."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 120,
+      "total_reported_complaints": 2,
+      "message_velocity_per_min": 5
+    },
+    "analysis": {
+      "is_fraud": false,
+      "risk_type": "Ağır Hakaret / Toksik Davranış / Tehdit",
+      "confidence_score": 0.99,
+      "suggested_action": "MUTE_USER_AND_MASK_PROFANITY"
+    }
+  },
+  {
+    "id": "CASE_007",
+    "context": "Satıcı - Çok Fazla İade Alan Kusurlu/Defolu Ürün Satıcısı",
+    "target_type": "seller",
+    "target_id": "seller_8821",
+    "message_history": [
+      {"sender": "buyer", "message": "Ürünün her yeri çizik içinde geldi, bu nasıl paketleme?"},
+      {"sender": "seller", "message": "Kargoda olmuştur efendim, kusura bakmayın gönderin iade alalım."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 60,
+      "total_sales_last_30_days": 150,
+      "returned_products_last_30_days": 112,
+      "return_rate": 0.74
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Kusurlu/Defolu Stok Satışı ile Platformu Zarara Uğratma",
+      "confidence_score": 0.89,
+      "suggested_action": "LIMIT_SELLER_SALES_AND_DEMAND_QUALITY_PROOF"
+    }
+  },
+  {
+    "id": "CASE_008",
+    "context": "Müşteri - Şantaj ile Haksız Kazanç / Kupon ve Hediye Koparma",
+    "target_type": "buyer",
+    "target_id": "buyer_3341",
+    "message_history": [
+      {"sender": "buyer", "message": "Ürünün kutusu biraz ezilmiş. Eğer bana 500 TL'lik hediye çeki tanımlamazsanız profilinize 1 yıldız çakıp 'içinden böcek çıktı' yazacağım, mağazanız batar."},
+      {"sender": "seller", "message": "Lütfen yapmayın, yeni mağazayız. Kutunun ezilmesi kargodan kaynaklı ama telafi etmeye çalışalım."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 15,
+      "total_reported_complaints": 0,
+      "threat_keywords_detected": 1
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Şantaj ve İtibar Tehdidi ile Manipülasyon (Extortion)",
+      "confidence_score": 0.96,
+      "suggested_action": "PROTECT_SELLER_RATING_AND_WARN_BUYER"
+    }
+  },
+  {
+    "id": "CASE_009",
+    "context": "Satıcı - Fiyat Manipülasyonu ve Sahte Sipariş Döngüsü (Stok Şişirme)",
+    "target_type": "seller",
+    "target_id": "seller_2004",
+    "message_history": [
+      {"sender": "buyer_bot_1", "message": "Harika ürün, hemen 50 adet aldım teşekkürler."},
+      {"sender": "seller", "message": "Rica ederiz, iyi günlerde kullanın."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 2,
+      "same_ip_transactions_detected": 14,
+      "price_fluctuation_ratio": 4.5
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Sahte Hacim Oluşturma / Organik Olmayan Alışveriş (Wash Trading)",
+      "confidence_score": 0.93,
+      "suggested_action": "FREEZE_ACCOUNT_FUNDS_AND_INVESTIGATE"
+    }
+  },
+  {
+    "id": "CASE_010",
+    "context": "Müşteri - Çalıntı Kart / Hesap Ele Geçirme Şüphesi (Account Takeover)",
+    "target_type": "buyer",
+    "target_id": "buyer_0091",
+    "message_history": [
+      {"sender": "buyer", "message": "Aynı laptoptan neden 5 tane birden alamıyorum? Limiti kaldırın hemen, acil onaylayın hepsini farklı adreslere kargolayacaksınız."},
+      {"sender": "seller", "message": "Güvenlik protokolü gereği aynı anda toplu elektronik satışı onay bekletilir efendim."}
+    ],
+    "behavioral_metrics": {
+      "account_age_days": 1200,
+      "average_order_value_tl_history": 350,
+      "current_order_value_tl": 185000,
+      "ip_country_changed": true,
+      "failed_login_attempts_last_1_hour": 6
+    },
+    "analysis": {
+      "is_fraud": true,
+      "risk_type": "Hesap Ele Geçirme (ATO) / Çalıntı Kart Şüphesi",
+      "confidence_score": 0.98,
+      "suggested_action": "SUSPEND_TRANSACTION_AND_SMS_VERIFY"
+    }
+  }
+]
